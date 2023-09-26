@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,6 +14,8 @@ public class Player : MonoBehaviour
 
     [Header("Combat")]
     [SerializeField] private WeaponSlot[] _slots;
+    [SerializeField] private Weapon _startingWeapon;
+    [SerializeField] float _speedMultiplier = 1.5f;
 
     private void Awake()
     {
@@ -24,6 +27,7 @@ public class Player : MonoBehaviour
         if (_rb == null)
             _rb = GetComponent<Rigidbody2D>();
     }
+
 
     private void OnEnable()
     {
@@ -41,6 +45,8 @@ public class Player : MonoBehaviour
     {
         foreach (WeaponSlot slot in _slots)
             slot.ResetIndexes();
+
+        AddWeapon(_startingWeapon, 0);
     }
 
     private void FixedUpdate()
@@ -81,7 +87,7 @@ public class Player : MonoBehaviour
 
         slot.getSlot().rotation = current;
 
-        Debug.Log("Created weapon at " + slot.getSlot().name + " with index of " + randomIndex);
+        //Debug.Log("Created weapon at " + slot.getSlot().name + " with index of " + randomIndex);
     }
 
     // Returns the position of the edge in a circle of x radius at angle y
@@ -99,13 +105,14 @@ public class Player : MonoBehaviour
     {
         if (!tag.Equals("SpeedUp"))
             return;
-        float multiplier = 2f;
-        Debug.Log("Multiplying... * " + multiplier);
+        StopAllCoroutines();
+        //Debug.Log("Multiplying... * " + multiplier);
         foreach (var slot in _slots)
         {
-            Debug.Log("Expected results: " + slot.getSpeed() * multiplier);
-            slot.setSpeed(slot.getSpeed() * multiplier);
-            Debug.Log("Outcome: " + slot.getSpeed());
+            //Debug.Log("Expected results: " + slot.getSpeed() * multiplier);
+            if (slot.getSpeed() <= (slot.getInitialSpeed() * _speedMultiplier * 10))
+                slot.setSpeed(slot.getSpeed() * _speedMultiplier);
+            //Debug.Log("Outcome: " + slot.getSpeed());
         }
     }
 
@@ -114,7 +121,23 @@ public class Player : MonoBehaviour
         if (!tag.Equals("SpeedUp"))
             return;
 
-        foreach (var slot in _slots)
+        StartCoroutine(GradualSpeedLoss());
+
+    }
+
+    private IEnumerator GradualSpeedLoss()
+    {
+        WaitForSeconds wait = new WaitForSeconds(0.5f);
+
+        while (_slots[0].getSpeed() > _slots[0].getInitialSpeed())
+        {
+            foreach (var slot in _slots)
+            {
+                slot.setSpeed(slot.getSpeed() / _speedMultiplier);
+            }
+            yield return wait;
+        }
+        foreach (WeaponSlot slot in _slots)
         {
             slot.setSpeed(slot.getInitialSpeed());
         }

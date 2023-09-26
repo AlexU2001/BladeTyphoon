@@ -4,6 +4,7 @@ public class Weapon : MonoBehaviour
 {
     [SerializeField] private Transform _edge;
     [SerializeField] private float _damage;
+    [SerializeField] private float _strength;
 
     [SerializeField] private ParticleSystem[] _particles;
 
@@ -50,5 +51,15 @@ public class Weapon : MonoBehaviour
         var em = _particles[0].emission;
         em.rateOverTime = _initialParticleRate;
         _particles[0].Stop();
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        Enemy enemy = collision.GetComponent<Enemy>();
+        if (enemy == null)
+            return;
+
+        Vector2 direction = (enemy.transform.position - transform.position).normalized;
+        enemy.TakeDamage(_damage, direction, _strength);
     }
 }
